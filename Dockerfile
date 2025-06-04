@@ -5,7 +5,7 @@ FROM python:3.8-slim-buster
 WORKDIR /usr/src/app
 
 # Install system dependencies
-RUN apt-get update && apt-get install \
+RUN apt-get update && apt-get install -y \
     build-essential \
     gfortran \
     libopenblas-dev \
@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install \
 
 # Upgrade pip and install specific versions of setuptools and wheel
 RUN pip install --no-cache-dir --upgrade pip
-# RUN pip install --no-cache-dir setuptools==59.6.0 wheel
+RUN pip install --no-cache-dir setuptools==59.6.0 wheel
 
 # Install Python dependencies
 RUN pip install --no-cache-dir numpy==1.17.3 cython==0.29.33 pytest
@@ -30,11 +30,13 @@ RUN pip install --no-cache-dir nose
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
+COPY . .
+
 # Modify setup.py to fix the version issue
-RUN sed -i \"s/ISRELEASED = False/ISRELEASED = True/\" setup.py
+RUN sed -i "s/ISRELEASED = False/ISRELEASED = True/" setup.py
 
 # Modify setup.py to remove test_suite option
-RUN sed -i \"/test_suite/d\" setup.py
+RUN sed -i "/test_suite/d" setup.py
 
 # Install scipy in editable mode with verbose output
 RUN pip install --no-use-pep517 -e . -v
@@ -43,5 +45,5 @@ RUN pip install --no-use-pep517 -e . -v
 RUN rm -f pytest.ini
 
 # Run specified test
-CMD pytest -v -rA --tb=long -p no:cacheprovider --disable-warnings \
-    scipy/sparse/tests/test_base.py
+CMD ["pytest", "-v", "-rA", "--tb=long", "-p", "no:cacheprovider", "--disable-warnings", \
+    "scipy/sparse/tests/test_base.py"] 
